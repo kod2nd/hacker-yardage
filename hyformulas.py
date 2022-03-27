@@ -83,7 +83,7 @@ def getOSMGolfData(bottom_lat, left_lon, top_lat, right_lon, printf=print):
 
 # calculate length of a degree of latitude at a given location
 
-def getLatDegreeDistance(bottom_lat, top_lat):
+def getLatDegreeDistance(bottom_lat, top_lat, scale='yards'):
 
 	# this is the approximate distance of a degree of latitude at the equator in yards
 	lat_degree_distance_equator = 120925.62
@@ -97,12 +97,14 @@ def getLatDegreeDistance(bottom_lat, top_lat):
 	# calculate length of a degree of latitude is at this average latitude
 	lat_degree_distance_yds = lat_degree_distance_equator + (abs(average_lat) * lat_yds_per_degree)
 
-	return lat_degree_distance_yds
+	if scale == 'yards':
+		return lat_degree_distance_yds
+	return lat_degree_distance_yds / 1.09361 # distance in meters
 
 
 # calculate length of a degree of longitude at a given location
 
-def getLonDegreeDistance(bottom_lat, top_lat): # length of longitude depends on latitude because the Earth is a sphere!
+def getLonDegreeDistance(bottom_lat, top_lat, scale='yards'): # length of longitude depends on latitude because the Earth is a sphere!
 
 	# this is the approximate distance of a degree of longitude at the equator in yards
 	lon_degree_distance_equator_yds = 69.172 * 5280 / 3
@@ -117,7 +119,9 @@ def getLonDegreeDistance(bottom_lat, top_lat): # length of longitude depends on 
 
 	lon_degree_distance_yds = lon_degree_distance_equator_yds * lon_distance_multiplier
 
-	return lon_degree_distance_yds
+	if scale == 'yards':
+		return lon_degree_distance_yds
+	return lon_degree_distance_yds / 1.09361 # distance in meters
 
 
 # given the points of a golf hole on OSM, define a bounding box for that hole
@@ -373,6 +377,7 @@ def drawFeature(image, array, color, line=-1):
 
 	if line > 0:
 		# need to redraw a line since fillPoly has no line thickness options that I've found
+		print("Inside")
 		cv2.polylines(image, nds, True, (0,0,0), line, lineType=cv2.LINE_AA)
 
 
@@ -381,8 +386,7 @@ def drawFeature(image, array, color, line=-1):
 def drawFeatures(image, feature_list, color, line=-1):
 
 	for feature_nodes in feature_list:
-
-		drawFeature(image, feature_nodes, color, line=-1)
+		drawFeature(image, feature_nodes, color, line=line)
 
 
 # for a list of tree nodes and an image, draw each tree on the image
@@ -964,7 +968,7 @@ def drawCarry(image, green_center, carrypoint, tee_box_points, ypp, text_size, t
 	# we only want to draw carry distances that are actually helpful to see on the tee
 	# if it's too close or too far, ignore it
 
-	if maxpoint_distance < 185 or maxpoint_distance > 325:
+	if maxpoint_distance < 150 or maxpoint_distance > 380:
 		# print("carry outside of our reasonable range")
 		return 0
 
@@ -1009,9 +1013,9 @@ def drawCarry(image, green_center, carrypoint, tee_box_points, ypp, text_size, t
 
 	drawMarkerPoints(image, tee_box_points, text_size, text_color)
 
-	dtg = getDistance(green_center, carrypoint, ypp)
+	dtg = getDistance(green_center, carrypoint, ypp) # Distance to go?
 
-	if dtg < 40 or maxpoint_distance < 215 or maxpoint_distance > 290:
+	if dtg < 40 or maxpoint_distance < 150 or maxpoint_distance > 380:
 
 		# print("still need a carry to reasonable fairway point",dtg,maxpoint_distance)
 
@@ -1095,11 +1099,14 @@ def getLine(point1,point2):
 # given a list of features and a list of tee boxes, draw carry distances to all of the
 # features from each of the tee boxes
 
-def drawCarryDistances(image, adjusted_hole_array, tee_box_list, carry_feature_list, ypp, text_size, text_color, filter_dist=40):
+def drawCarryDistances(image, adjusted_hole_array, tee_box_list, carry_feature_list, ypp, text_size, text_color, filter_dist=40, is_tree=False):
 
 	hole_origin, midpoint, green_center = getThreeWaypoints(adjusted_hole_array)
 
 	carry_points = getMaxPoints(carry_feature_list)
+
+	if not is_tree: # if its a singular point, the min and max points are the same
+		carry_points += getMinPoints(carry_feature_list)
 
 	tee_box_points = getMinPoints(tee_box_list)
 
@@ -1164,7 +1171,7 @@ def drawExtraCarries(image, adjusted_hole_array, tee_boxes, right_carries, left_
 
 	# if we already have enough carries, let's move on
 
-	if (int(right_carries) + int(left_carries)) > 0:
+	if (int(right_carries) + int(left_carries)) > 1:
 
 		return None
 
@@ -1507,7 +1514,7 @@ def drawTriangleMarkers(image, points, base, height, text_color):
 # given a list of features, draw the distance to the center of the green from each
 # (from the farthest back point)
 
-def drawGreenDistancesMin(image, adjusted_hole_array, feature_list, ypp, text_size, text_color, filter_dist=40, par_3_tees=0):
+def drawGreenDistancesMin(image, adjusted_hole_array, feature_list, ypp, text_size, text_color, filter_dist=40, par_3_tees=0, filter_max_dist=220):
 
 	hole_origin, midpoint, green_center = getThreeWaypoints(adjusted_hole_array)
 
@@ -1521,7 +1528,7 @@ def drawGreenDistancesMin(image, adjusted_hole_array, feature_list, ypp, text_si
 
 		distance = int(getDistance(point,green_center,ypp))
 
-		if distance < 40 or distance > 305:
+		if distance < 40 or distance > filter_max_dist:
 			continue
 
 		if par_3_tees == 0:
@@ -1764,8 +1771,8 @@ def getGreenGrid(b_w_image, adjusted_hole_array, ypp):
 def generateYardageBook(latmin,lonmin,latmax,lonmax,replace_existing,colors,filter_width=50,short_factor=1,med_factor=1):
 
 	# calculate distance in yards of one degree of latitude and one degree of longitude
-	lat_degree_distance = getLatDegreeDistance(latmin,latmax)
-	lon_degree_distance = getLonDegreeDistance(latmin,latmax)
+	lat_degree_distance = getLatDegreeDistance(latmin,latmax, scale='meters')
+	lon_degree_distance = getLonDegreeDistance(latmin,latmax, scale='meters')
 
 
 	# download golf hole info from OSM
@@ -1982,16 +1989,25 @@ def generateYardageBook(latmin,lonmin,latmax,lonmax,replace_existing,colors,filt
 		if hole_par == 3:
 
 			drawGreenDistancesMin(rotated_image, adjusted_hole_array, final_tee_boxes, ypp, text_size, colors["text"], par_3_tees=1)
-
+			right_carries, left_carries = drawCarryDistances(rotated_image, adjusted_hole_array, final_tee_boxes, final_sand_traps, ypp, text_size, colors["text"])
+			add_r, add_l = drawCarryDistances(rotated_image, adjusted_hole_array, final_tee_boxes, final_water_hazards, ypp, text_size, colors["text"])
+			add_r2, add_l2 = drawCarryDistances(rotated_image, adjusted_hole_array, final_tee_boxes, final_green_array, ypp, text_size, colors["text"])
+			# right_carries += add_r
+			# left_carries += add_l
+			# right_carries += add_r2
+			# left_carries += add_l2
 		# for longer holes, there's more to do:
 		else:
 
 			# draw the carry distance to all the sand traps and water hazards
 			right_carries, left_carries = drawCarryDistances(rotated_image, adjusted_hole_array, final_tee_boxes, final_sand_traps, ypp, text_size, colors["text"])
 			add_r, add_l = drawCarryDistances(rotated_image, adjusted_hole_array, final_tee_boxes, final_water_hazards, ypp, text_size, colors["text"])
+			add_r2, add_l2 = drawCarryDistances(rotated_image, adjusted_hole_array, final_tee_boxes, final_trees, ypp, text_size, colors["text"], is_tree=True)
 
 			right_carries += add_r
 			left_carries += add_l
+			right_carries += add_r2
+			left_carries += add_l2
 
 			# if there aren't any sand traps or water hazards, draw something anyway to give the hole some scale
 			drawExtraCarries(rotated_image, adjusted_hole_array, final_tee_boxes, right_carries, left_carries, ypp, text_size, colors["text"])

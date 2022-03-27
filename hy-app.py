@@ -159,14 +159,14 @@ frm_coords.rowconfigure(2, weight=1, minsize=50)
 
 lbl_minlon = tk.Label(master=frm_minlon, text="West")
 ent_minlon = tk.Entry(master=frm_minlon)
-ent_minlon.insert(0, "-97.7114")
+ent_minlon.insert(0, "103.8341")
 
 lbl_minlon.pack()
 ent_minlon.pack()
 
 lbl_maxlat = tk.Label(master=frm_maxlat, text="North")
 ent_maxlat = tk.Entry(master=frm_maxlat)
-ent_maxlat.insert(0, "30.2448")
+ent_maxlat.insert(0, "1.4249")
 
 lbl_maxlat.pack()
 ent_maxlat.pack()
@@ -175,7 +175,7 @@ ent_maxlat.pack()
 
 lbl_minlat = tk.Label(master=frm_minlat, text="South")
 ent_minlat = tk.Entry(master=frm_minlat)
-ent_minlat.insert(0, "30.2286")
+ent_minlat.insert(0, "1.4071")
 
 lbl_minlat.pack()
 ent_minlat.pack()
@@ -184,7 +184,7 @@ ent_minlat.pack()
 
 lbl_maxlon = tk.Label(master=frm_maxlon, text="East")
 ent_maxlon = tk.Entry(master=frm_maxlon)
-ent_maxlon.insert(0, "-97.7018")
+ent_maxlon.insert(0, "103.8576")
 
 lbl_maxlon.pack()
 ent_maxlon.pack()
