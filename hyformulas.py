@@ -377,7 +377,6 @@ def drawFeature(image, array, color, line=-1):
 
 	if line > 0:
 		# need to redraw a line since fillPoly has no line thickness options that I've found
-		print("Inside")
 		cv2.polylines(image, nds, True, (0,0,0), line, lineType=cv2.LINE_AA)
 
 
@@ -930,6 +929,44 @@ def getMinPoints(feature_list):
 
 		for point in pointlist:
 			if point[1] > minpoint[1]:
+				minpoint = point
+
+		min_points.append(minpoint)
+
+	return min_points
+
+# for a list of features, get the point of each feature that is
+# furthest from the right of the image
+def getRightPoints(feature_list):
+
+	max_points = []
+
+	for feature in feature_list:
+		pointlist = feature.tolist()
+		maxpoint = pointlist[0]
+
+		for point in pointlist:
+			if point[0] < maxpoint[0]:
+				maxpoint = point
+
+		max_points.append(maxpoint)
+
+	return max_points
+
+
+# for a list of features, get the point of each feature that is
+# furthest from the left of the image
+
+def getLeftPoints(feature_list):
+
+	min_points = []
+
+	for feature in feature_list:
+		pointlist = feature.tolist()
+		minpoint = pointlist[0]
+
+		for point in pointlist:
+			if point[0] > minpoint[0]:
 				minpoint = point
 
 		min_points.append(minpoint)
@@ -1698,7 +1735,6 @@ def drawGreenDistancesMax(image, adjusted_hole_array, feature_list, ypp, text_si
 def getGreenGrid(b_w_image, adjusted_hole_array, ypp):
 
 	hole_origin, midpoint, green_center = getThreeWaypoints(adjusted_hole_array)
-
 	x = int(green_center[0])
 	y = int(green_center[1])
 
@@ -1989,13 +2025,9 @@ def generateYardageBook(latmin,lonmin,latmax,lonmax,replace_existing,colors,filt
 		if hole_par == 3:
 
 			drawGreenDistancesMin(rotated_image, adjusted_hole_array, final_tee_boxes, ypp, text_size, colors["text"], par_3_tees=1)
-			right_carries, left_carries = drawCarryDistances(rotated_image, adjusted_hole_array, final_tee_boxes, final_sand_traps, ypp, text_size, colors["text"])
-			add_r, add_l = drawCarryDistances(rotated_image, adjusted_hole_array, final_tee_boxes, final_water_hazards, ypp, text_size, colors["text"])
-			add_r2, add_l2 = drawCarryDistances(rotated_image, adjusted_hole_array, final_tee_boxes, final_green_array, ypp, text_size, colors["text"])
-			# right_carries += add_r
-			# left_carries += add_l
-			# right_carries += add_r2
-			# left_carries += add_l2
+			drawCarryDistances(rotated_image, adjusted_hole_array, final_tee_boxes, final_sand_traps, ypp, text_size, colors["text"])
+			drawCarryDistances(rotated_image, adjusted_hole_array, final_tee_boxes, final_water_hazards, ypp, text_size, colors["text"])
+			drawCarryDistances(rotated_image, adjusted_hole_array, final_tee_boxes, final_green_array, ypp, text_size, colors["text"])
 		# for longer holes, there's more to do:
 		else:
 
@@ -2124,10 +2156,30 @@ def generateYardageBook(latmin,lonmin,latmax,lonmax,replace_existing,colors,filt
 		drawFeatures(bw_green_image, final_green_array, (255, 255, 255),line=2)
 		drawFeatures(bw_green_image, final_sand_traps, (210,210,210))
 
+		# drawGreenDistancesMin(cropped_image, adjusted_hole_array, final_green_array, ypp, text_size, colors["text"])
 		# we also want to overlay a 3-yard grid to show how large the green is
 		# and to make it easier to figure out carry distances to greenside bunkers
 		green_grid = getGreenGrid(bw_green_image, adjusted_hole_array,ypp)
 
+		# Calculate green height and width
+		# greenMinPt = getMinPoints(final_green_array)
+		# greenMaxPt = getMaxPoints(final_green_array)
+		# greenLeftPt = getLeftPoints(final_green_array)
+		# greenRightPt = getRightPoints(final_green_array)
+		# greenHeight = round(getDistance(greenMinPt, greenMaxPt, ypp))
+		# greenWidth = round(getDistance(greenLeftPt, greenRightPt, ypp))
+		# METER_TO_FEET = 3.28084
+		# greenHeightFt = round(greenHeight*METER_TO_FEET)
+		# greenWidthFt = round(greenWidth*METER_TO_FEET)
+		# print(f"GREEN HEIGHT(m): {greenHeight}")
+		# print(f"GREEN Width(m): {greenWidth}")
+		# # greenDesc = f"Each Square is 3x3 meters"
+		# text_weight = round(text_size*2)
+		# img_h, img_w, img_c = green_grid.shape
+		# text_size = 1.5/3000*img_h
+		# text_size = round(text_size,2)
+		# drawDistanceText(green_grid, greenDesc, (10,50), text_size, colors["text"])
+		# cv2.putText(green_grid, greenDesc, (10,50), cv2.FONT_HERSHEY_SIMPLEX, text_size, colors["text"], 3)
 		cv2.imwrite(("greens/" + file_name), green_grid)
 
 	return True

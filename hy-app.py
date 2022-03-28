@@ -1,3 +1,4 @@
+from asyncio import sleep
 from hyformulas import *
 
 import tkinter as tk
@@ -96,9 +97,15 @@ def run_program():
 
 		time.sleep(1)
 
-		book = generateYardageBook(latmin,lonmin,latmax,lonmax,replace_existing,colors,filter_width=hole_width,short_factor=small_scale,med_factor=med_scale)
-
-		loading.destroy()
+		try:
+			book = generateYardageBook(latmin,lonmin,latmax,lonmax,replace_existing,colors,filter_width=hole_width,short_factor=small_scale,med_factor=med_scale)
+			loading.destroy()
+		except Exception as e:
+			print(f"error: {e}")
+			# sleep(5)
+			# book = generateYardageBook(latmin,lonmin,latmax,lonmax,replace_existing,colors,filter_width=hole_width,short_factor=small_scale,med_factor=med_scale)
+			loading.destroy()
+			return False
 
 	except ValueError:
 		mb.showerror(title="Error",message="Error: unable to look up coordinates in OSM. Please make sure all coordinates are formatted properly.")
