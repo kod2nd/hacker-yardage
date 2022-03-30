@@ -2025,9 +2025,18 @@ def generateYardageBook(latmin,lonmin,latmax,lonmax,replace_existing,colors,filt
 		if hole_par == 3:
 
 			drawGreenDistancesMin(rotated_image, adjusted_hole_array, final_tee_boxes, ypp, text_size, colors["text"], par_3_tees=1)
-			drawCarryDistances(rotated_image, adjusted_hole_array, final_tee_boxes, final_sand_traps, ypp, text_size, colors["text"])
-			drawCarryDistances(rotated_image, adjusted_hole_array, final_tee_boxes, final_water_hazards, ypp, text_size, colors["text"])
-			drawCarryDistances(rotated_image, adjusted_hole_array, final_tee_boxes, final_green_array, ypp, text_size, colors["text"])
+			try:
+				drawCarryDistances(rotated_image, adjusted_hole_array, final_tee_boxes, final_sand_traps, ypp, text_size, colors["text"])
+			except Exception as e:
+				print(f"Error{e}")
+			try:
+				drawCarryDistances(rotated_image, adjusted_hole_array, final_tee_boxes, final_water_hazards, ypp, text_size, colors["text"])
+			except Exception as e:
+				print(f"Error{e}")
+			try:
+				drawCarryDistances(rotated_image, adjusted_hole_array, final_tee_boxes, final_green_array, ypp, text_size, colors["text"])
+			except Exception as e:
+				print(f"Error{e}")
 		# for longer holes, there's more to do:
 		else:
 

@@ -1,5 +1,7 @@
+from ast import While
 from asyncio import sleep
 from hyformulas import *
+import random
 
 import tkinter as tk
 import webbrowser
@@ -8,6 +10,13 @@ import tkinter.messagebox as mb
 
 import time
 
+def generateYardageBookWrapper(latmin,lonmin,latmax,lonmax,replace_existing,colors,filter_width,short_factor,med_factor):
+	try:
+		generateYardageBook(latmin,lonmin,latmax,lonmax,replace_existing,colors,filter_width=filter_width,short_factor=short_factor,med_factor=med_factor)
+		return False
+	except Exception as e:
+		print(f"error: {e}")
+		return True
 
 root = tk.Tk()
 root.title("Hacker Yardage")
@@ -96,16 +105,20 @@ def run_program():
 		loading = loadingWindow()
 
 		time.sleep(1)
+		# try:
+		# 	book = generateYardageBook(latmin,lonmin,latmax,lonmax,replace_existing,colors,filter_width=hole_width,short_factor=small_scale,med_factor=med_scale)
+		# 	loading.destroy()
+		# except Exception as e:
+		# 	print(f"error: {e}")
+		# 	# sleep(5)
+		# 	# book = generateYardageBook(latmin,lonmin,latmax,lonmax,replace_existing,colors,filter_width=hole_width,short_factor=small_scale,med_factor=med_scale)
+		# 	loading.destroy()
+		# 	return False
+		to_rerun = True
 
-		try:
-			book = generateYardageBook(latmin,lonmin,latmax,lonmax,replace_existing,colors,filter_width=hole_width,short_factor=small_scale,med_factor=med_scale)
-			loading.destroy()
-		except Exception as e:
-			print(f"error: {e}")
-			# sleep(5)
-			# book = generateYardageBook(latmin,lonmin,latmax,lonmax,replace_existing,colors,filter_width=hole_width,short_factor=small_scale,med_factor=med_scale)
-			loading.destroy()
-			return False
+		while to_rerun:
+			to_rerun = generateYardageBookWrapper(latmin,lonmin,latmax,lonmax,replace_existing,colors,filter_width=hole_width,short_factor=small_scale,med_factor=med_scale)
+			time.sleep(random.randint(5,10))
 
 	except ValueError:
 		mb.showerror(title="Error",message="Error: unable to look up coordinates in OSM. Please make sure all coordinates are formatted properly.")
