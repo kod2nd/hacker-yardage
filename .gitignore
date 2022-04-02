@@ -134,3 +134,4 @@ dmypy.json
 # Output files
 /output/*.png
 /greens/*.png
+/courses
